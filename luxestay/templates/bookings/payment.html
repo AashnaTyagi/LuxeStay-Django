@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% block title %}Payment — LuxeStay{% endblock %}
+
+{% block extra_head %}
+<style>
+  .payment-wrap { max-width: 900px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+  .payment-layout { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; }
+  .pay-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 2rem; }
+  .pay-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem; }
+  .pay-title i { color: var(--gold); }
+  .card-methods { display: flex; gap: 0.75rem; margin-bottom: 2rem; }
+  .card-method {
+    flex: 1; padding: 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    text-align: center; cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.8rem; font-weight: 600;
+    color: var(--text-mid);
+  }
+  .card-method.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.05); }
+  .card-method i { display: block; font-size: 1.25rem; margin-bottom: 0.3rem; }
+  .card-preview {
+    background: linear-gradient(135deg, var(--charcoal), var(--charcoal-light));
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    position: relative; overflow: hidden;
+    min-height: 140px;
+  }
+  .card-preview::before {
+    content: ''; position: absolute;
+    top: -30px; right: -30px;
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    background: rgba(201,168,76,0.12);
+  }
+  .card-preview::after {
+    content: ''; position: absolute;
+    bottom: -40px; right: 30px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(201,168,76,0.07);
+  }
+  .card-chip { width: 36px; height: 28px; background: linear-gradient(135deg, var(--gold-light), var(--gold)); border-radius: 5px; margin-bottom: 1rem; }
+  .card-number-preview { font-family: monospace; font-size: 1.2rem; color: white; letter-spacing: 4px; margin-bottom: 1rem; }
+  .card-info-row { display: flex; justify-content: space-between; }
+  .card-field-label { font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; }
+  .card-field-value { font-size: 0.85rem; color: white; font-weight: 600; }
+  .security-icons { display: flex; align-items: center; gap: 1rem; font-size: 0.75rem; color: var(--text-light); margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .security-icons img { height: 24px; }
+  .secure-badge { display: inline-flex; align-items: center; gap: 0.3rem; background: var(--cream); padding: 0.3rem 0.6rem; border-radius: 20px; }
+
+  /* Summary */
+  .pay-summary-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 1.5rem; position: sticky; top: 90px; }
+  .ps-hotel { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
+  .ps-hotel img { width: 70px; height: 60px; object-fit: cover; border-radius: 8px; }
+  .ps-hotel-name { font-weight: 600; font-size: 0.9rem; line-height: 1.3; }
+  .ps-hotel-loc { font-size: 0.75rem; color: var(--text-light); margin-top: 0.25rem; }
+  .ps-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+  .ps-row:last-child { border-bottom: none; }
+  .ps-label { color: var(--text-mid); }
+  .ps-val { font-weight: 600; }
+  .ps-total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid var(--border); }
+  .ps-total-label { font-weight: 700; color: var(--charcoal); }
+  .ps-total-price { font-family: var(--font-heading); font-size: 1.5rem; color: var(--gold-dark); font-weight: 700; }
+
+  @media (max-width: 768px) { .payment-layout { grid-template-columns: 1fr; } .pay-summary-card { position: static; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="payment-wrap">
+
+  <div style="margin-bottom:1.5rem;">
+    <h1 style="font-size:1.75rem;font-weight:700;">Secure Payment</h1>
+    <p style="color:var(--text-mid);font-size:0.875rem;">Booking ref: <strong style="font-family:monospace;color:var(--gold-dark);">{{ booking.booking_ref }}</strong></p>
+  </div>
+
+  <div class="payment-layout">
+    <!-- Payment Form -->
+    <div>
+      <div class="pay-card">
+        <div class="pay-title"><i class="fas fa-credit-card"></i> Payment Method</div>
+
+        <div class="card-methods">
+          <div class="card-method active" onclick="setMethod(this, 'card')">
+            <i class="fas fa-credit-card"></i> Card
+          </div>
+          <div class="card-method" onclick="setMethod(this, 'upi')">
+            <i class="fas fa-mobile-alt"></i> UPI
+          </div>
+          <div class="card-method" onclick="setMethod(this, 'netbanking')">
+            <i class="fas fa-university"></i> Net Banking
+          </div>
+          <div class="card-method" onclick="setMethod(this, 'wallet')">
+            <i class="fas fa-wallet"></i> Wallet
+          </div>
+        </div>
+
+        <!-- Card Preview -->
+        <div class="card-preview">
+          <div class="card-chip"></div>
+          <div class="card-number-preview" id="cardNumPreview">•••• •••• •••• ••••</div>
+          <div class="card-info-row">
+            <div>
+              <div class="card-field-label">Card Holder</div>
+              <div class="card-field-value" id="cardNamePreview">{{ user.full_name|upper }}</div>
+            </div>
+            <div>
+              <div class="card-field-label">Expires</div>
+              <div class="card-field-value" id="cardExpPreview">MM / YY</div>
+            </div>
+          </div>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="form-group">
+            <label class="form-label">Card Number</label>
+            <div style="position:relative;">
+              <input type="text" name="card_number" class="form-input" maxlength="19"
+                     placeholder="1234 5678 9012 3456"
+                     oninput="formatCard(this); updatePreview(this.value, 'num')"
+                     style="letter-spacing:2px;" />
+              <span style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);font-size:1.4rem;color:var(--text-light);">
+                <i class="far fa-credit-card"></i>
+              </span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cardholder Name</label>
+            <input type="text" name="card_name" class="form-input" placeholder="As printed on card"
+                   oninput="document.getElementById('cardNamePreview').textContent = this.value.toUpperCase() || '{{ user.full_name|upper }}'" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+              <label class="form-label">Expiry Date</label>
+              <input type="text" name="expiry" class="form-input" maxlength="5" placeholder="MM / YY"
+                     oninput="formatExpiry(this); document.getElementById('cardExpPreview').textContent = this.value || 'MM / YY'" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">CVV</label>
+              <input type="password" name="cvv" class="form-input" maxlength="4" placeholder="•••" />
+            </div>
+          </div>
+
+          <div class="security-icons">
+            <span class="secure-badge"><i class="fas fa-lock" style="color:var(--success);"></i> 256-bit SSL</span>
+            <span class="secure-badge"><i class="fas fa-shield-alt" style="color:var(--info);"></i> PCI DSS</span>
+            <span class="secure-badge"><i class="fas fa-check-circle" style="color:var(--gold);"></i> Verified</span>
+          </div>
+
+          <button type="submit" class="btn btn-gold btn-full btn-lg" style="margin-top:1.5rem;">
+            <i class="fas fa-lock"></i>
+            Pay ₹{{ booking.total_price|floatformat:"0" }} Securely
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div>
+      <div class="pay-summary-card">
+        <div style="font-weight:700;font-size:0.9rem;color:var(--charcoal);margin-bottom:1rem;">Order Summary</div>
+        <div class="ps-hotel">
+          <img src="https://source.unsplash.com/140x120/?hotel,{{ hotel.city|urlencode }}&sig={{ hotel.id }}pay"
+               alt="{{ hotel.name }}"
+               onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=140&q=80'" />
+          <div>
+            <div class="ps-hotel-name">{{ booking.hotel_name }}</div>
+            <div class="ps-hotel-loc"><i class="fas fa-map-marker-alt" style="color:var(--gold);"></i> {{ booking.hotel_location }}</div>
+          </div>
+        </div>
+        <div class="ps-row">
+          <span class="ps-label">Room</span>
+          <span class="ps-val">{{ booking.room_type|default:"Standard" }}</span>
+        </div>
+        <div class="ps-row">
+          <span class="ps-label">Check-in</span>
+          <span class="ps-val">{{ booking.check_in|date:"d M Y" }}</span>
+        </div>
+        <div class="ps-row">
+          <span class="ps-label">Check-out</span>
+          <span class="ps-val">{{ booking.check_out|date:"d M Y" }}</span>
+        </div>
+        <div class="ps-row">
+          <span class="ps-label">{{ booking.nights }} night{% if booking.nights != 1 %}s{% endif %} × ₹{{ booking.price_per_night|floatformat:"0" }}</span>
+          <span class="ps-val">₹{{ booking.price_per_night|floatformat:"0" }}</span>
+        </div>
+        <div class="ps-row">
+          <span class="ps-label">Taxes (12%)</span>
+          <span class="ps-val">₹{% widthratio booking.total_price 1 0.107 %}</span>
+        </div>
+        <div class="ps-total-row">
+          <span class="ps-total-label">Total</span>
+          <span class="ps-total-price">₹{{ booking.total_price|floatformat:"0" }}</span>
+        </div>
+        <div style="margin-top:1rem;font-size:0.75rem;color:var(--text-light);text-align:center;">
+          <i class="fas fa-undo"></i> Free cancellation up to 24h before check-in
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function formatCard(input) {
+    let val = input.value.replace(/\D/g, '').substring(0, 16);
+    input.value = val.replace(/(\d{4})/g, '$1 ').trim();
+  }
+  function formatExpiry(input) {
+    let val = input.value.replace(/\D/g, '');
+    if (val.length >= 2) val = val.substring(0,2) + ' / ' + val.substring(2,4);
+    input.value = val;
+  }
+  function updatePreview(val, type) {
+    const digits = val.replace(/\D/g, '');
+    const padded = (digits + '•'.repeat(16)).substring(0, 16);
+    const groups = padded.match(/.{1,4}/g).join(' ');
+    document.getElementById('cardNumPreview').textContent = groups;
+  }
+  function setMethod(el, method) {
+    document.querySelectorAll('.card-method').forEach(m => m.classList.remove('active'));
+    el.classList.add('active');
+  }
+</script>
+{% endblock %}

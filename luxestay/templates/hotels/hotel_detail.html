@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% block title %}{{ hotel.name }} — LuxeStay{% endblock %}
+
+{% block extra_head %}
+<style>
+  .hotel-hero {
+    height: 60vh; min-height: 440px;
+    position: relative; overflow: hidden;
+  }
+  .hotel-hero img { width: 100%; height: 100%; object-fit: cover; }
+  .hotel-hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(0deg, rgba(26,26,46,0.85) 0%, rgba(26,26,46,0.2) 60%, transparent 100%);
+    display: flex; align-items: flex-end; padding: 3rem;
+  }
+  .hero-hotel-info { max-width: 800px; }
+  .hero-hotel-name { font-family: var(--font-display); font-size: 2.8rem; color: white; margin-bottom: 0.5rem; }
+  .hero-hotel-meta { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+  .hero-meta-item { display: flex; align-items: center; gap: 0.4rem; color: rgba(255,255,255,0.8); font-size: 0.875rem; }
+  .hero-meta-item i { color: var(--gold-light); }
+
+  .detail-layout { display: grid; grid-template-columns: 1fr 360px; gap: 2.5rem; padding: 2.5rem 0; }
+
+  /* Main Info */
+  .detail-section { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 2rem; margin-bottom: 1.5rem; }
+  .detail-section-title { font-size: 1.1rem; font-weight: 700; color: var(--charcoal); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+  .detail-section-title i { color: var(--gold); }
+  .amenities-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+  .amenity-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem; background: var(--cream); border-radius: var(--radius); font-size: 0.85rem; }
+  .amenity-item i { color: var(--gold); font-size: 1rem; width: 20px; text-align: center; }
+
+  /* Rooms */
+  .room-card { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1rem; transition: var(--transition); }
+  .room-card:hover { border-color: var(--gold); box-shadow: var(--shadow-gold); }
+  .room-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+  .room-type { font-size: 1.05rem; font-weight: 700; color: var(--charcoal); }
+  .room-price { text-align: right; }
+  .room-amount { font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; color: var(--charcoal); }
+  .room-meta { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .room-detail { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text-mid); }
+  .room-detail i { color: var(--gold); }
+
+  /* Booking Panel (sticky) */
+  .booking-panel {
+    position: sticky; top: 90px;
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+  .booking-panel-header {
+    background: linear-gradient(135deg, var(--charcoal), var(--charcoal-light));
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .bp-hotel-name { color: white; font-weight: 600; margin-bottom: 0.25rem; }
+  .bp-price { font-family: var(--font-display); font-size: 2rem; color: var(--gold-light); }
+  .bp-price-label { color: rgba(255,255,255,0.6); font-size: 0.8rem; }
+  .booking-panel-body { padding: 1.5rem; }
+  .bp-summary { background: var(--cream); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem; }
+  .bp-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text-mid); }
+  .bp-row:last-child { margin-bottom: 0; font-weight: 700; color: var(--charcoal); font-size: 0.9rem; border-top: 1px solid var(--border); padding-top: 0.5rem; }
+  .bp-room-select { margin-bottom: 1rem; }
+
+  /* Reviews */
+  .review-card { border-bottom: 1px solid var(--border); padding: 1.25rem 0; }
+  .review-card:last-child { border-bottom: none; }
+  .review-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+  .reviewer-name { font-weight: 600; font-size: 0.9rem; }
+  .review-date { font-size: 0.75rem; color: var(--text-light); }
+  .review-stars { color: var(--gold); font-size: 0.85rem; margin-bottom: 0.4rem; }
+  .review-text { font-size: 0.875rem; color: var(--text-mid); line-height: 1.7; }
+
+  @media (max-width: 1024px) { .detail-layout { grid-template-columns: 1fr; } .booking-panel { position: static; } }
+  @media (max-width: 600px) { .amenities-grid { grid-template-columns: 1fr 1fr; } .hotel-hero { height: 45vh; } .hero-hotel-name { font-size: 2rem; } }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero Image -->
+<div class="hotel-hero">
+  <img src="https://source.unsplash.com/1600x900/?luxury-hotel,{{ hotel.city|urlencode }}&sig={{ hotel.id }}detail"
+       alt="{{ hotel.name }}"
+       onerror="this.src='https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1600&q=80'" />
+  <div class="hotel-hero-overlay">
+    <div class="hero-hotel-info">
+      <div style="margin-bottom:0.75rem;">
+        <span class="badge badge-gold" style="font-size:0.75rem;">{{ hotel.property_type|capfirst }}</span>
+        &nbsp;
+        <span style="color:var(--gold-light);">
+          {% for i in "12345" %}{% if forloop.counter <= hotel.stars %}★{% endif %}{% endfor %}
+        </span>
+      </div>
+      <h1 class="hero-hotel-name">{{ hotel.name }}</h1>
+      <div class="hero-hotel-meta">
+        <span class="hero-meta-item"><i class="fas fa-map-marker-alt"></i>{{ hotel.location }}</span>
+        <span class="hero-meta-item"><i class="fas fa-star"></i>{{ hotel.rating }}/10 — {{ hotel.reviews }} reviews</span>
+        <span class="hero-meta-item"><i class="fas fa-wifi"></i>Free WiFi</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="detail-layout">
+
+    <!-- Left: Info -->
+    <div>
+      <!-- Overview -->
+      <div class="detail-section">
+        <div class="detail-section-title"><i class="fas fa-info-circle"></i> About This Property</div>
+        <p style="color:var(--text-mid);line-height:1.8;margin-bottom:1rem;">
+          Nestled in the heart of {{ hotel.location }}, {{ hotel.name }} is a premier {{ hotel.stars }}-star {{ hotel.property_type }}
+          offering unparalleled comfort and sophistication. Guests are welcomed into an elegant environment where every detail
+          reflects a commitment to luxury hospitality.
+        </p>
+        <p style="color:var(--text-mid);line-height:1.8;">
+          With world-class facilities, attentive staff and a prime location, this property consistently earns top ratings
+          from discerning travellers seeking the very best in accommodation.
+        </p>
+      </div>
+
+      <!-- Amenities -->
+      <div class="detail-section">
+        <div class="detail-section-title"><i class="fas fa-concierge-bell"></i> Amenities & Facilities</div>
+        <div class="amenities-grid">
+          {% for icon, label in amenities %}
+          <div class="amenity-item"><i class="{{ icon }}"></i>{{ label }}</div>
+          {% empty %}
+          <div class="amenity-item"><i class="fas fa-wifi"></i>Free WiFi</div>
+          <div class="amenity-item"><i class="fas fa-parking"></i>Parking</div>
+          <div class="amenity-item"><i class="fas fa-utensils"></i>Restaurant</div>
+          <div class="amenity-item"><i class="fas fa-dumbbell"></i>Fitness Center</div>
+          <div class="amenity-item"><i class="fas fa-concierge-bell"></i>24h Concierge</div>
+          <div class="amenity-item"><i class="fas fa-snowflake"></i>Air Conditioning</div>
+          {% endfor %}
+          <!-- Always show these base amenities -->
+          <div class="amenity-item"><i class="fas fa-concierge-bell"></i>24h Concierge</div>
+          <div class="amenity-item"><i class="fas fa-snowflake"></i>AC & Heating</div>
+          <div class="amenity-item"><i class="fas fa-tv"></i>Smart TV</div>
+          <div class="amenity-item"><i class="fas fa-coffee"></i>Room Service</div>
+          <div class="amenity-item"><i class="fas fa-shield-alt"></i>24h Security</div>
+          <div class="amenity-item"><i class="fas fa-luggage-cart"></i>Luggage Storage</div>
+        </div>
+      </div>
+
+      <!-- Room Options -->
+      <div class="detail-section">
+        <div class="detail-section-title"><i class="fas fa-bed"></i> Room Options</div>
+        {% for room in rooms %}
+        <div class="room-card">
+          <div class="room-header">
+            <div>
+              <div class="room-type">{{ room.type }} Room</div>
+              <div class="room-meta">
+                <span class="room-detail"><i class="fas fa-users"></i> Up to {{ room.capacity }} guests</span>
+                <span class="room-detail"><i class="fas fa-bed"></i> {{ room.bed }}</span>
+                <span class="room-detail"><i class="fas fa-ruler-combined"></i> {{ room.area }} sq.ft</span>
+                {% if room.available %}<span class="badge badge-success">Available</span>{% else %}<span class="badge badge-danger">Unavailable</span>{% endif %}
+              </div>
+            </div>
+            <div class="room-price">
+              <div class="room-amount">₹{{ room.price|floatformat:"0" }}</div>
+              <div style="font-size:0.75rem;color:var(--text-light);">per night</div>
+            </div>
+          </div>
+          {% if room.available %}
+          <a href="{% url 'book_hotel' hotel.id %}?room_id={{ room.id }}&room_type={{ room.type }}&price={{ room.price }}"
+             class="btn btn-gold btn-sm">
+            <i class="fas fa-calendar-check"></i> Book This Room
+          </a>
+          {% else %}
+          <button class="btn btn-outline btn-sm" disabled>Unavailable</button>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Reviews -->
+      <div class="detail-section">
+        <div class="detail-section-title"><i class="fas fa-comment-alt"></i> Guest Reviews
+          <span class="rating-chip" style="margin-left:auto;">{{ hotel.rating }} <span style="font-weight:300;">/ 10</span></span>
+        </div>
+        <div class="review-card">
+          <div class="review-header"><span class="reviewer-name">Priya S.</span><span class="review-date">Jan 2025</span></div>
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">Absolutely phenomenal stay. The service was impeccable and the room exceeded all expectations. Will definitely return.</p>
+        </div>
+        <div class="review-card">
+          <div class="review-header"><span class="reviewer-name">James M.</span><span class="review-date">Dec 2024</span></div>
+          <div class="review-stars">★★★★☆</div>
+          <p class="review-text">Beautiful property, excellent location. The breakfast was outstanding. Slight noise from the street at night but nothing serious.</p>
+        </div>
+        <div class="review-card">
+          <div class="review-header"><span class="reviewer-name">Aisha R.</span><span class="review-date">Nov 2024</span></div>
+          <div class="review-stars">★★★★★</div>
+          <p class="review-text">The spa was divine. Staff went above and beyond to make our anniversary special. Highly recommend the suite upgrade.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Booking Panel -->
+    <div>
+      <div class="booking-panel">
+        <div class="booking-panel-header">
+          <div class="bp-hotel-name">{{ hotel.name }}</div>
+          <div class="bp-price">₹{{ hotel.price|floatformat:"0" }}</div>
+          <div class="bp-price-label">starting from per night</div>
+        </div>
+        <div class="booking-panel-body">
+          <form id="quickBookForm" action="{% url 'book_hotel' hotel.id %}" method="get">
+            <div class="bp-room-select">
+              <label class="form-label">Room Type</label>
+              <select name="room_type" class="form-input" id="roomSelect" onchange="updatePrice()">
+                {% for room in rooms %}
+                <option value="{{ room.type }}" data-price="{{ room.price }}" data-id="{{ room.id }}"
+                        {% if not room.available %}disabled{% endif %}>
+                  {{ room.type }} — ₹{{ room.price|floatformat:"0" }}/night {% if not room.available %}(N/A){% endif %}
+                </option>
+                {% endfor %}
+              </select>
+              <input type="hidden" name="room_id" id="roomIdInput" value="{{ rooms.0.id }}" />
+              <input type="hidden" name="price" id="priceInput" value="{{ rooms.0.price }}" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Check-in</label>
+              <input type="date" name="check_in" class="form-input" id="checkIn" onchange="calcTotal()" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Check-out</label>
+              <input type="date" name="check_out" class="form-input" id="checkOut" onchange="calcTotal()" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Guests</label>
+              <select name="guests" class="form-input">
+                <option value="1">1 Guest</option>
+                <option value="2" selected>2 Guests</option>
+                <option value="3">3 Guests</option>
+                <option value="4">4 Guests</option>
+              </select>
+            </div>
+            <div class="bp-summary" id="priceSummary" style="display:none;">
+              <div class="bp-row"><span>₹<span id="nightPrice">-</span> × <span id="nightCount">-</span> nights</span><span>₹<span id="subtotal">-</span></span></div>
+              <div class="bp-row"><span>Taxes & fees (12%)</span><span>₹<span id="taxes">-</span></span></div>
+              <div class="bp-row"><span>Total</span><span>₹<span id="total">-</span></span></div>
+            </div>
+            <button type="submit" class="btn btn-gold btn-full btn-lg">
+              <i class="fas fa-calendar-check"></i> Check Availability
+            </button>
+          </form>
+          <div style="text-align:center;margin-top:1rem;font-size:0.75rem;color:var(--text-light);">
+            <i class="fas fa-lock"></i> Secure booking — Free cancellation
+          </div>
+        </div>
+      </div>
+
+      <!-- Map placeholder -->
+      <div class="detail-section" style="margin-top:1.5rem;padding:1.25rem;">
+        <div class="detail-section-title" style="margin-bottom:0.75rem;"><i class="fas fa-map"></i> Location</div>
+        <div style="background:var(--cream-dark);border-radius:var(--radius);height:160px;display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:0.875rem;">
+          <div style="text-align:center;">
+            <i class="fas fa-map-marker-alt" style="font-size:2rem;color:var(--gold);display:block;margin-bottom:0.5rem;"></i>
+            {{ hotel.location }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Similar Hotels -->
+  {% if similar_hotels %}
+  <div style="padding:2rem 0 4rem;">
+    <h2 style="font-size:1.5rem;margin-bottom:1.5rem;">More in {{ hotel.city }}</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.5rem;">
+      {% for s in similar_hotels %}
+      <div class="card" style="cursor:pointer;" onclick="window.location.href='{% url 'hotel_detail' s.id %}'">
+        <div style="height:180px;overflow:hidden;">
+          <img src="https://source.unsplash.com/560x360/?hotel,{{ s.city|urlencode }}&sig={{ s.id }}sim" style="width:100%;height:100%;object-fit:cover;transition:transform 0.4s;" alt="{{ s.name }}" />
+        </div>
+        <div style="padding:1rem;">
+          <div style="font-weight:600;margin-bottom:0.25rem;">{{ s.name }}</div>
+          <div style="font-size:0.8rem;color:var(--text-light);margin-bottom:0.75rem;"><i class="fas fa-map-marker-alt" style="color:var(--gold);"></i> {{ s.location }}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div><span style="font-family:var(--font-heading);font-size:1.1rem;font-weight:700;">₹{{ s.price|floatformat:"0" }}</span><span style="font-size:0.72rem;color:var(--text-light);">/night</span></div>
+            <span class="rating-chip">{{ s.rating }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('checkIn').min = today;
+  document.getElementById('checkOut').min = today;
+
+  function updatePrice() {
+    const sel = document.getElementById('roomSelect');
+    const opt = sel.options[sel.selectedIndex];
+    document.getElementById('roomIdInput').value = opt.dataset.id;
+    document.getElementById('priceInput').value = opt.dataset.price;
+    calcTotal();
+  }
+
+  function calcTotal() {
+    const ci = document.getElementById('checkIn').value;
+    const co = document.getElementById('checkOut').value;
+    const price = +document.getElementById('priceInput').value || {{ rooms.0.price }};
+    if (!ci || !co) return;
+    const nights = (new Date(co) - new Date(ci)) / 86400000;
+    if (nights <= 0) return;
+    const sub = price * nights;
+    const tax = Math.round(sub * 0.12);
+    const tot = sub + tax;
+    document.getElementById('nightPrice').textContent = price.toLocaleString('en-IN');
+    document.getElementById('nightCount').textContent = nights;
+    document.getElementById('subtotal').textContent = sub.toLocaleString('en-IN');
+    document.getElementById('taxes').textContent = tax.toLocaleString('en-IN');
+    document.getElementById('total').textContent = tot.toLocaleString('en-IN');
+    document.getElementById('priceSummary').style.display = 'block';
+  }
+</script>
+{% endblock %}

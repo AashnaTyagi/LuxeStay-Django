@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Sign In — LuxeStay{% endblock %}
+
+{% block extra_head %}
+<style>
+  .auth-page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .auth-visual {
+    background: linear-gradient(135deg, var(--charcoal), var(--charcoal-light));
+    position: relative; overflow: hidden;
+    display: flex; align-items: flex-end;
+    padding: 3rem;
+    order: 2;
+  }
+  .auth-visual::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=900&q=80') center/cover;
+    opacity: 0.22;
+  }
+  .auth-visual-content { position: relative; z-index: 1; }
+  .av-brand { font-family: var(--font-display); font-size: 2.5rem; color: white; margin-bottom: 1rem; }
+  .av-brand span { color: var(--gold); }
+  .av-quote {
+    font-family: var(--font-display);
+    font-size: 1.5rem; font-style: italic;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.5; max-width: 380px;
+  }
+  .av-quote-author { color: var(--gold-light); font-size: 0.85rem; margin-top: 0.75rem; font-style: normal; }
+
+  .auth-form-side {
+    display: flex; align-items: center; justify-content: center;
+    padding: 3rem 2rem;
+    background: var(--cream);
+    order: 1;
+  }
+  .auth-form-inner { width: 100%; max-width: 420px; }
+  .auth-form-inner h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+  .auth-form-inner p { color: var(--text-mid); margin-bottom: 2rem; }
+  .auth-switch { text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-mid); }
+  .auth-switch a { color: var(--gold); font-weight: 600; text-decoration: none; }
+  .forgot-link { display: block; text-align: right; font-size: 0.8rem; color: var(--gold); text-decoration: none; margin-top: -0.5rem; margin-bottom: 1.25rem; }
+
+  @media (max-width: 900px) {
+    .auth-page { grid-template-columns: 1fr; }
+    .auth-visual { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page" style="padding-top:70px;">
+  <div class="auth-form-side">
+    <div class="auth-form-inner">
+      <h1>Welcome Back</h1>
+      <p>Sign in to access your bookings and exclusive deals.</p>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          {{ form.username }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          {{ form.password }}
+        </div>
+        <a href="#" class="forgot-link">Forgot password?</a>
+        <button type="submit" class="btn btn-gold btn-full btn-lg">
+          <i class="fas fa-sign-in-alt"></i> Sign In
+        </button>
+      </form>
+
+      <div class="auth-switch">
+        Don't have an account? <a href="{% url 'register' %}">Create one — it's free</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-visual">
+    <div class="auth-visual-content">
+      <div class="av-brand">Luxe<span>Stay</span></div>
+      <div class="av-quote">
+        "Not all those who wander are lost — but they do deserve the very best hotels."
+        <div class="av-quote-author">— The LuxeStay Philosophy</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

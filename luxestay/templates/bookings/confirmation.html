@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% block title %}Booking Confirmed — LuxeStay{% endblock %}
+
+{% block extra_head %}
+<style>
+  .confirmation-wrap { max-width: 760px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  .success-banner {
+    background: linear-gradient(135deg, var(--charcoal), var(--charcoal-light));
+    border-radius: var(--radius-lg);
+    padding: 3rem 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative; overflow: hidden;
+  }
+  .success-banner::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(201,168,76,0.15) 0%, transparent 70%);
+  }
+  .success-icon {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem; color: white;
+    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative; z-index: 1;
+  }
+  @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .success-title { font-family: var(--font-display); font-size: 2.5rem; color: white; margin-bottom: 0.5rem; position: relative; z-index: 1; }
+  .success-sub { color: rgba(255,255,255,0.65); position: relative; z-index: 1; }
+  .ref-badge {
+    display: inline-block;
+    background: rgba(201,168,76,0.2);
+    border: 1px solid rgba(201,168,76,0.4);
+    color: var(--gold-light);
+    padding: 0.5rem 1.5rem;
+    border-radius: 30px;
+    font-family: monospace;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    font-weight: 700;
+    margin-top: 1rem;
+    position: relative; z-index: 1;
+  }
+
+  .booking-details-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; margin-bottom: 1.5rem; }
+  .bdc-header { background: var(--cream-dark); padding: 1.25rem 1.5rem; font-weight: 700; font-size: 0.9rem; color: var(--charcoal); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+  .bdc-header i { color: var(--gold); }
+  .bdc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .bdc-item { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+  .bdc-item:nth-child(odd) { border-right: 1px solid var(--border); }
+  .bdc-label { font-size: 0.75rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.3rem; }
+  .bdc-value { font-size: 0.95rem; font-weight: 600; color: var(--charcoal); }
+
+  .action-strip { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="confirmation-wrap">
+
+  <div class="success-banner">
+    <div class="success-icon"><i class="fas fa-check"></i></div>
+    <h1 class="success-title">Booking Confirmed!</h1>
+    <p class="success-sub">Your reservation is secured. A confirmation has been sent to {{ user.email }}</p>
+    <div class="ref-badge">{{ booking.booking_ref }}</div>
+  </div>
+
+  <!-- Hotel Summary -->
+  {% if hotel %}
+  <div style="background:white;border-radius:var(--radius-lg);border:1px solid var(--border);display:flex;overflow:hidden;margin-bottom:1.5rem;gap:0;">
+    <img src="https://source.unsplash.com/320x200/?luxury-hotel,{{ hotel.city|urlencode }}&sig={{ hotel.id }}conf"
+         style="width:200px;object-fit:cover;flex-shrink:0;"
+         onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=320&q=80'"
+         alt="{{ hotel.name }}" />
+    <div style="padding:1.5rem;flex:1;">
+      <div style="font-size:0.75rem;color:var(--gold);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:0.4rem;">
+        {% if hotel.stars %}{% for i in "12345" %}{% if forloop.counter <= hotel.stars %}★{% endif %}{% endfor %} {{ hotel.stars }}-Star {{ hotel.property_type|capfirst }}{% endif %}
+      </div>
+      <div style="font-size:1.2rem;font-weight:700;color:var(--charcoal);margin-bottom:0.4rem;">{{ booking.hotel_name }}</div>
+      <div style="font-size:0.85rem;color:var(--text-light);"><i class="fas fa-map-marker-alt" style="color:var(--gold);"></i> {{ booking.hotel_location }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Booking Details -->
+  <div class="booking-details-card">
+    <div class="bdc-header"><i class="fas fa-receipt"></i> Booking Details</div>
+    <div class="bdc-grid">
+      <div class="bdc-item">
+        <div class="bdc-label">Booking Reference</div>
+        <div class="bdc-value" style="font-family:monospace;color:var(--gold-dark);">{{ booking.booking_ref }}</div>
+      </div>
+      <div class="bdc-item">
+        <div class="bdc-label">Status</div>
+        <div class="bdc-value">
+          <span class="badge {% if booking.status == 'confirmed' %}badge-success{% elif booking.status == 'cancelled' %}badge-danger{% else %}badge-info{% endif %}">
+            {{ booking.status|capfirst }}
+          </span>
+        </div>
+      </div>
+      <div class="bdc-item">
+        <div class="bdc-label">Check-in</div>
+        <div class="bdc-value">{{ booking.check_in|date:"D, d M Y" }}</div>
+      </div>
+      <div class="bdc-item">
+        <div class="bdc-label">Check-out</div>
+        <div class="bdc-value">{{ booking.check_out|date:"D, d M Y" }}</div>
+      </div>
+      <div class="bdc-item">
+        <div class="bdc-label">Duration</div>
+        <div class="bdc-value">{{ booking.nights }} night{% if booking.nights != 1 %}s{% endif %}</div>
+      </div>
+      <div class="bdc-item">
+        <div class="bdc-label">Guests</div>
+        <div class="bdc-value">{{ booking.guests }}</div>
+      </div>
+      <div class="bdc-item">
+        <div class="bdc-label">Room Type</div>
+        <div class="bdc-value">{{ booking.room_type|default:"Standard" }}</div>
+      </div>
+      <div class="bdc-item">
+        <div class="bdc-label">Price/Night</div>
+        <div class="bdc-value">₹{{ booking.price_per_night|floatformat:"0" }}</div>
+      </div>
+      <div class="bdc-item" style="grid-column: 1/-1;">
+        <div class="bdc-label">Total Amount</div>
+        <div class="bdc-value" style="font-family:var(--font-heading);font-size:1.4rem;color:var(--gold-dark);">
+          ₹{{ booking.total_price|floatformat:"0" }}
+          <span style="font-size:0.75rem;color:var(--text-light);font-family:var(--font-body);font-weight:400;"> (incl. 12% tax)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What's Next -->
+  <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:2rem;">
+    <div style="font-weight:700;color:var(--charcoal);margin-bottom:1rem;"><i class="fas fa-info-circle" style="color:var(--gold);"></i> What happens next?</div>
+    <div style="font-size:0.875rem;color:var(--text-mid);line-height:1.8;">
+      ✓ A confirmation email has been sent to <strong>{{ user.email }}</strong><br>
+      ✓ Check-in time is 2:00 PM. Early check-in available upon request.<br>
+      ✓ Free cancellation available up to 24 hours before check-in.<br>
+      ✓ Contact the hotel with your reference number <strong>{{ booking.booking_ref }}</strong> for any changes.
+    </div>
+  </div>
+
+  <div class="action-strip">
+    <a href="{% url 'payment' booking.booking_ref %}" class="btn btn-gold btn-lg">
+      <i class="fas fa-credit-card"></i> Proceed to Payment
+    </a>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline btn-lg">
+      <i class="fas fa-th-large"></i> My Bookings
+    </a>
+    <a href="{% url 'hotel_list' %}" class="btn btn-dark btn-lg">
+      <i class="fas fa-search"></i> Explore More
+    </a>
+  </div>
+
+</div>
+{% endblock %}

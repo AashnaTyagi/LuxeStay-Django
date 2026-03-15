@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% block title %}My Dashboard — LuxeStay{% endblock %}
+
+{% block extra_head %}
+<style>
+  .dashboard-layout { display: grid; grid-template-columns: 260px 1fr; gap: 2rem; padding: 2.5rem 0 5rem; }
+  .dash-sidebar {}
+  .user-card {
+    background: linear-gradient(135deg, var(--charcoal), var(--charcoal-light));
+    border-radius: var(--radius-lg);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    margin-bottom: 1.25rem;
+  }
+  .user-avatar-lg {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.75rem; color: white; font-weight: 700;
+    margin: 0 auto 1rem;
+  }
+  .user-name { color: white; font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; }
+  .user-email { color: rgba(255,255,255,0.55); font-size: 0.8rem; }
+  .user-member-since { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-top: 0.5rem; }
+
+  .dash-nav { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; }
+  .dash-nav-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    color: var(--text-mid);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    transition: var(--transition);
+  }
+  .dash-nav-item:last-child { border-bottom: none; }
+  .dash-nav-item:hover, .dash-nav-item.active { color: var(--gold); background: rgba(201,168,76,0.05); }
+  .dash-nav-item i { width: 18px; text-align: center; color: var(--gold); }
+
+  /* Stats */
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 2rem; }
+  .stat-card {
+    background: white; border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+    transition: var(--transition);
+  }
+  .stat-card:hover { border-color: var(--gold); box-shadow: var(--shadow-gold); }
+  .stat-icon {
+    width: 52px; height: 52px; border-radius: 12px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.06));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem; color: var(--gold);
+    flex-shrink: 0;
+  }
+  .stat-n { font-family: var(--font-heading); font-size: 1.75rem; font-weight: 700; color: var(--charcoal); line-height: 1; }
+  .stat-l { font-size: 0.75rem; color: var(--text-light); margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Booking Cards */
+  .booking-card {
+    background: white; border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+    transition: var(--transition);
+  }
+  .booking-card:hover { border-color: rgba(201,168,76,0.3); box-shadow: var(--shadow-md); }
+  .bc-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); background: var(--cream); }
+  .bc-ref { font-family: monospace; font-size: 0.85rem; font-weight: 700; color: var(--gold-dark); }
+  .bc-body { display: grid; grid-template-columns: 140px 1fr auto; gap: 0; }
+  .bc-img img { width: 140px; height: 110px; object-fit: cover; }
+  .bc-info { padding: 1.25rem; }
+  .bc-hotel-name { font-weight: 700; font-size: 1rem; color: var(--charcoal); margin-bottom: 0.3rem; }
+  .bc-loc { font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.75rem; }
+  .bc-dates { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .bc-date-item { font-size: 0.8rem; }
+  .bc-date-label { color: var(--text-light); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .bc-date-val { font-weight: 600; color: var(--charcoal); }
+  .bc-actions { padding: 1.25rem; display: flex; flex-direction: column; justify-content: center; gap: 0.6rem; border-left: 1px solid var(--border); min-width: 150px; }
+
+  .empty-bookings { text-align: center; padding: 4rem 2rem; background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); }
+
+  @media (max-width: 1024px) { .dashboard-layout { grid-template-columns: 1fr; } }
+  @media (max-width: 600px) { .stats-row { grid-template-columns: 1fr; } .bc-body { grid-template-columns: 1fr; } .bc-actions { border-left: none; border-top: 1px solid var(--border); flex-direction: row; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="dashboard-layout">
+
+    <!-- Sidebar -->
+    <aside class="dash-sidebar">
+      <div class="user-card">
+        <div class="user-avatar-lg">{{ user.first_name|first|upper }}{{ user.last_name|first|upper|default:user.email|first|upper }}</div>
+        <div class="user-name">{{ user.full_name|default:user.email }}</div>
+        <div class="user-email">{{ user.email }}</div>
+        <div class="user-member-since">Member since {{ user.date_joined|date:"M Y" }}</div>
+      </div>
+      <div class="dash-nav">
+        <a href="{% url 'dashboard' %}" class="dash-nav-item active"><i class="fas fa-th-large"></i> Dashboard</a>
+        <a href="{% url 'hotel_list' %}" class="dash-nav-item"><i class="fas fa-search"></i> Find Hotels</a>
+        <a href="{% url 'profile' %}" class="dash-nav-item"><i class="fas fa-user"></i> My Profile</a>
+        <a href="{% url 'deals' %}" class="dash-nav-item"><i class="fas fa-bolt"></i> Deals</a>
+        <a href="{% url 'logout' %}" class="dash-nav-item" style="color:var(--danger);"><i class="fas fa-sign-out-alt" style="color:var(--danger);"></i> Logout</a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div>
+      <div style="margin-bottom:2rem;">
+        <h1 style="font-size:1.75rem;font-weight:700;">Welcome back, {{ user.first_name|default:user.email }}! 👋</h1>
+        <p style="color:var(--text-mid);">Manage your bookings and explore new destinations.</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+          <div>
+            <div class="stat-n">{{ bookings.count }}</div>
+            <div class="stat-l">Total Bookings</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-clock"></i></div>
+          <div>
+            <div class="stat-n">{{ upcoming_count }}</div>
+            <div class="stat-l">Upcoming</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-rupee-sign"></i></div>
+          <div>
+            <div class="stat-n">₹{{ total_spent|floatformat:"0"|default:"0" }}</div>
+            <div class="stat-l">Total Spent</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bookings List -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <h2 style="font-size:1.2rem;font-weight:700;">My Bookings</h2>
+        <a href="{% url 'hotel_list' %}" class="btn btn-gold btn-sm">
+          <i class="fas fa-plus"></i> New Booking
+        </a>
+      </div>
+
+      {% if bookings %}
+        {% for booking in bookings %}
+        <div class="booking-card">
+          <div class="bc-header">
+            <span class="bc-ref">{{ booking.booking_ref }}</span>
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <span class="badge {% if booking.status == 'confirmed' %}badge-success{% elif booking.status == 'cancelled' %}badge-danger{% else %}badge-info{% endif %}">
+                {{ booking.status|capfirst }}
+              </span>
+              <span class="badge {% if booking.payment_status == 'paid' %}badge-success{% else %}badge-info{% endif %}">
+                {{ booking.payment_status|capfirst }}
+              </span>
+            </div>
+          </div>
+          <div class="bc-body">
+            <div class="bc-img">
+              <img src="https://source.unsplash.com/280x220/?hotel&sig={{ booking.hotel_id }}dash"
+                   alt="{{ booking.hotel_name }}"
+                   onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=280&q=80'" />
+            </div>
+            <div class="bc-info">
+              <div class="bc-hotel-name">{{ booking.hotel_name }}</div>
+              <div class="bc-loc"><i class="fas fa-map-marker-alt" style="color:var(--gold);"></i> {{ booking.hotel_location }}</div>
+              <div class="bc-dates">
+                <div class="bc-date-item">
+                  <div class="bc-date-label">Check-in</div>
+                  <div class="bc-date-val">{{ booking.check_in|date:"d M Y" }}</div>
+                </div>
+                <div class="bc-date-item">
+                  <div class="bc-date-label">Check-out</div>
+                  <div class="bc-date-val">{{ booking.check_out|date:"d M Y" }}</div>
+                </div>
+                <div class="bc-date-item">
+                  <div class="bc-date-label">Nights</div>
+                  <div class="bc-date-val">{{ booking.nights }}</div>
+                </div>
+                <div class="bc-date-item">
+                  <div class="bc-date-label">Guests</div>
+                  <div class="bc-date-val">{{ booking.guests }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="bc-actions">
+              <div style="text-align:right;margin-bottom:0.5rem;">
+                <div style="font-size:0.7rem;color:var(--text-light);">Total</div>
+                <div style="font-family:var(--font-heading);font-size:1.2rem;font-weight:700;color:var(--charcoal);">₹{{ booking.total_price|floatformat:"0"|default:"—" }}</div>
+              </div>
+              <a href="{% url 'booking_confirmation' booking.booking_ref %}" class="btn btn-outline btn-sm">
+                <i class="fas fa-eye"></i> View
+              </a>
+              {% if booking.payment_status == 'unpaid' and booking.status == 'confirmed' %}
+              <a href="{% url 'payment' booking.booking_ref %}" class="btn btn-gold btn-sm">
+                <i class="fas fa-credit-card"></i> Pay
+              </a>
+              {% endif %}
+              {% if booking.status == 'confirmed' %}
+              <a href="{% url 'cancel_booking' booking.booking_ref %}" class="btn btn-sm" style="background:#fff5f5;color:var(--danger);border:1px solid #fecaca;">
+                <i class="fas fa-times"></i> Cancel
+              </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-bookings">
+          <div style="font-size:3rem;margin-bottom:1rem;">🏨</div>
+          <h3 style="margin-bottom:0.5rem;">No bookings yet</h3>
+          <p style="color:var(--text-mid);margin-bottom:1.5rem;">Start planning your next luxurious getaway.</p>
+          <a href="{% url 'hotel_list' %}" class="btn btn-gold btn-lg">
+            <i class="fas fa-search"></i> Explore Hotels
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

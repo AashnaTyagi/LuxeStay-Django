@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Create Account — LuxeStay{% endblock %}
+
+{% block extra_head %}
+<style>
+  .auth-page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .auth-visual {
+    background: linear-gradient(135deg, var(--charcoal), var(--charcoal-light));
+    position: relative; overflow: hidden;
+    display: flex; align-items: flex-end;
+    padding: 3rem;
+  }
+  .auth-visual::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url('https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=900&q=80') center/cover;
+    opacity: 0.2;
+  }
+  .auth-visual-content { position: relative; z-index: 1; }
+  .av-brand { font-family: var(--font-display); font-size: 2.5rem; color: white; margin-bottom: 1rem; }
+  .av-brand span { color: var(--gold); }
+  .av-tagline { font-family: var(--font-display); font-size: 1.6rem; color: rgba(255,255,255,0.85); line-height: 1.4; margin-bottom: 1.5rem; font-style: italic; }
+  .av-features { display: flex; flex-direction: column; gap: 0.75rem; }
+  .av-feature { display: flex; align-items: center; gap: 0.75rem; color: rgba(255,255,255,0.7); font-size: 0.875rem; }
+  .av-feature i { color: var(--gold-light); width: 16px; }
+
+  .auth-form-side {
+    display: flex; align-items: center; justify-content: center;
+    padding: 3rem 2rem;
+    background: var(--cream);
+  }
+  .auth-form-inner { width: 100%; max-width: 440px; }
+  .auth-form-inner h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+  .auth-form-inner p { color: var(--text-mid); margin-bottom: 2rem; }
+  .auth-divider {
+    display: flex; align-items: center; gap: 1rem;
+    margin: 1.5rem 0;
+    font-size: 0.8rem; color: var(--text-light);
+  }
+  .auth-divider::before, .auth-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .form-name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .auth-switch { text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-mid); }
+  .auth-switch a { color: var(--gold); font-weight: 600; text-decoration: none; }
+
+  @media (max-width: 900px) {
+    .auth-page { grid-template-columns: 1fr; }
+    .auth-visual { display: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page" style="padding-top:70px;">
+  <div class="auth-visual">
+    <div class="auth-visual-content">
+      <div class="av-brand">Luxe<span>Stay</span></div>
+      <div class="av-tagline">"Luxury is in each detail."</div>
+      <div class="av-features">
+        <div class="av-feature"><i class="fas fa-check-circle"></i> Access 2,400+ world-class properties</div>
+        <div class="av-feature"><i class="fas fa-check-circle"></i> Exclusive member deals & early access</div>
+        <div class="av-feature"><i class="fas fa-check-circle"></i> Manage all bookings in one place</div>
+        <div class="av-feature"><i class="fas fa-check-circle"></i> 24/7 concierge support</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-form-side">
+    <div class="auth-form-inner">
+      <h1>Create Account</h1>
+      <p>Join LuxeStay and start your luxury travel journey.</p>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-name-row">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            {{ form.first_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            {{ form.last_name }}
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          {{ form.email }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mobile Number</label>
+          {{ form.mobile }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          {{ form.password1 }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          {{ form.password2 }}
+        </div>
+        <button type="submit" class="btn btn-gold btn-full btn-lg" style="margin-top:0.5rem;">
+          <i class="fas fa-user-plus"></i> Create My Account
+        </button>
+      </form>
+
+      <div class="auth-switch">
+        Already have an account? <a href="{% url 'login' %}">Sign in</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}My Profile — LuxeStay{% endblock %}
+
+{% block extra_head %}
+<style>
+  .profile-wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+  .profile-header {
+    background: linear-gradient(135deg, var(--charcoal), var(--charcoal-light));
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    display: flex; gap: 2rem; align-items: center;
+    margin-bottom: 2rem;
+  }
+  .profile-avatar-wrap { position: relative; flex-shrink: 0; }
+  .profile-avatar {
+    width: 90px; height: 90px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem; color: white; font-weight: 700;
+    border: 3px solid rgba(255,255,255,0.2);
+  }
+  .profile-info h2 { color: white; font-size: 1.5rem; margin-bottom: 0.3rem; }
+  .profile-info p { color: rgba(255,255,255,0.6); font-size: 0.875rem; }
+  .profile-badge { display: inline-block; background: rgba(201,168,76,0.2); border: 1px solid rgba(201,168,76,0.4); color: var(--gold-light); padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; margin-top: 0.5rem; }
+  .form-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 2rem; }
+  .form-card h3 { font-size: 1.1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+  .form-card h3 i { color: var(--gold); }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .profile-header { flex-direction: column; text-align: center; } .form-row-2 { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-wrap">
+  <div class="profile-header">
+    <div class="profile-avatar-wrap">
+      <div class="profile-avatar">
+        {{ user.first_name|first|upper }}{{ user.last_name|first|upper|default:user.email|first|upper }}
+      </div>
+    </div>
+    <div class="profile-info">
+      <h2>{{ user.full_name|default:user.email }}</h2>
+      <p>{{ user.email }}</p>
+      {% if user.mobile %}<p>{{ user.mobile }}</p>{% endif %}
+      <div class="profile-badge"><i class="fas fa-star"></i> LuxeStay Member since {{ user.date_joined|date:"M Y" }}</div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <h3><i class="fas fa-user-edit"></i> Edit Profile</h3>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          {{ form.first_name }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile Number</label>
+        {{ form.mobile }}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" class="form-input" value="{{ user.email }}" readonly style="background:var(--cream);cursor:not-allowed;" />
+        <div style="font-size:0.75rem;color:var(--text-light);margin-top:0.3rem;"><i class="fas fa-lock"></i> Email cannot be changed.</div>
+      </div>
+      <button type="submit" class="btn btn-gold">
+        <i class="fas fa-save"></i> Save Changes
+      </button>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline" style="margin-left:0.75rem;">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% block title %}Book {{ hotel.name }} — LuxeStay{% endblock %}
+
+{% block extra_head %}
+<style>
+  .booking-layout { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; padding: 2.5rem 0 4rem; }
+  .booking-form-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 2rem; }
+  .booking-form-card h2 { font-size: 1.4rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .section-divider { height: 1px; background: var(--border); margin: 1.75rem 0; }
+  .step-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--gold); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+  .step-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Summary Card */
+  .summary-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); position: sticky; top: 90px; overflow: hidden; }
+  .sc-header { background: linear-gradient(135deg, var(--charcoal), var(--charcoal-light)); padding: 1.25rem; }
+  .sc-hotel-img { width: 100%; height: 160px; object-fit: cover; }
+  .sc-hotel-name { color: white; font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; }
+  .sc-hotel-loc { color: rgba(255,255,255,0.65); font-size: 0.8rem; }
+  .sc-body { padding: 1.25rem; }
+  .sc-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+  .sc-row:last-child { border-bottom: none; }
+  .sc-label { color: var(--text-mid); }
+  .sc-value { font-weight: 600; color: var(--charcoal); }
+  .sc-total { font-size: 1rem; font-weight: 700; color: var(--charcoal); }
+  .sc-total-price { font-family: var(--font-heading); font-size: 1.5rem; color: var(--gold-dark); }
+
+  /* Room option tabs */
+  .room-tabs { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .room-tab {
+    flex: 1; min-width: 140px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    background: white;
+    text-align: center;
+  }
+  .room-tab:hover { border-color: var(--gold); }
+  .room-tab.selected { border-color: var(--gold); background: rgba(201,168,76,0.06); }
+  .room-tab-type { font-weight: 700; font-size: 0.9rem; color: var(--charcoal); }
+  .room-tab-price { font-size: 0.8rem; color: var(--text-mid); margin-top: 0.25rem; }
+  .room-tab-bed { font-size: 0.72rem; color: var(--text-light); }
+
+  /* Payment section */
+  .card-input-group { position: relative; }
+  .card-brand { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.25rem; color: var(--text-light); }
+  .card-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+  @media (max-width: 1024px) { .booking-layout { grid-template-columns: 1fr; } .summary-card { position: static; } }
+  @media (max-width: 600px) { .form-row, .card-row { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Breadcrumb -->
+  <div style="padding:1.5rem 0 0;font-size:0.8rem;color:var(--text-light);">
+    <a href="{% url 'home' %}" style="color:var(--text-light);text-decoration:none;">Home</a> /
+    <a href="{% url 'hotel_list' %}" style="color:var(--text-light);text-decoration:none;">Hotels</a> /
+    <a href="{% url 'hotel_detail' hotel.id %}" style="color:var(--text-light);text-decoration:none;">{{ hotel.name }}</a> /
+    <span style="color:var(--charcoal);">Book</span>
+  </div>
+
+  <div class="booking-layout">
+    <!-- Form -->
+    <div>
+      <div class="booking-form-card">
+        <h2><i class="fas fa-calendar-check" style="color:var(--gold);margin-right:0.5rem;"></i>Complete Your Booking</h2>
+
+        <form method="post" id="bookingForm">
+          {% csrf_token %}
+          <input type="hidden" name="hotel_id" value="{{ hotel.id }}" />
+          <input type="hidden" name="hotel_name" value="{{ hotel.name }}" />
+          <input type="hidden" name="hotel_location" value="{{ hotel.location }}" />
+          <input type="hidden" name="hotel_image" value="{{ hotel.image }}" />
+          <input type="hidden" name="price_per_night" id="finalPrice" value="{{ selected_room.price }}" />
+          <input type="hidden" name="room_type" id="finalRoomType" value="{{ selected_room.type }}" />
+
+          <!-- Step 1: Room -->
+          <div class="step-label"><i class="fas fa-bed"></i> Choose Room Type</div>
+          <div class="room-tabs">
+            {% for room in rooms %}
+            <div class="room-tab {% if room == selected_room %}selected{% endif %}"
+                 onclick="selectRoom('{{ room.type }}', {{ room.price }}, this)"
+                 {% if not room.available %}style="opacity:0.5;cursor:not-allowed;"{% endif %}>
+              <div class="room-tab-type">{{ room.type }}</div>
+              <div class="room-tab-price">₹{{ room.price|floatformat:"0" }}/night</div>
+              <div class="room-tab-bed">{{ room.bed }}</div>
+              {% if not room.available %}<div style="font-size:0.7rem;color:var(--danger);font-weight:600;">Unavailable</div>{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Step 2: Dates -->
+          <div class="step-label"><i class="fas fa-calendar"></i> Select Dates</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Check-in Date</label>
+              {{ form.check_in }}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Check-out Date</label>
+              {{ form.check_out }}
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Number of Guests</label>
+            {{ form.guests }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Special Requests (Optional)</label>
+            {{ form.special_requests }}
+          </div>
+
+          <div class="section-divider"></div>
+
+          <!-- Step 3: Guest Info -->
+          <div class="step-label"><i class="fas fa-user"></i> Guest Information</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First Name</label>
+              <input type="text" class="form-input" value="{{ user.first_name }}" readonly style="background:var(--cream);" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name</label>
+              <input type="text" class="form-input" value="{{ user.last_name }}" readonly style="background:var(--cream);" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" value="{{ user.email }}" readonly style="background:var(--cream);" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mobile</label>
+            <input type="tel" class="form-input" value="{{ user.mobile }}" readonly style="background:var(--cream);" />
+          </div>
+
+          <div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-light);">
+            <i class="fas fa-info-circle" style="color:var(--gold);"></i>
+            Guest info is from your profile. <a href="{% url 'profile' %}" style="color:var(--gold);">Update profile</a>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <!-- Step 4: Policy -->
+          <div class="step-label"><i class="fas fa-shield-alt"></i> Booking Policy</div>
+          <div style="background:var(--cream);border-radius:var(--radius);padding:1rem;margin-bottom:1.5rem;font-size:0.85rem;color:var(--text-mid);line-height:1.7;">
+            <i class="fas fa-check-circle" style="color:var(--success);"></i> <strong>Free cancellation</strong> up to 24 hours before check-in.<br>
+            <i class="fas fa-check-circle" style="color:var(--success);"></i> No prepayment required — pay at the hotel.<br>
+            <i class="fas fa-check-circle" style="color:var(--success);"></i> Instant booking confirmation via email.
+          </div>
+
+          <div class="form-group" style="display:flex;gap:0.75rem;align-items:flex-start;">
+            <input type="checkbox" id="terms" required style="width:18px;height:18px;margin-top:2px;accent-color:var(--gold);" />
+            <label for="terms" style="font-size:0.85rem;color:var(--text-mid);">
+              I agree to the <a href="#" style="color:var(--gold);">Terms & Conditions</a> and
+              <a href="#" style="color:var(--gold);">Cancellation Policy</a>.
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-gold btn-full btn-lg" style="margin-top:0.5rem;">
+            <i class="fas fa-calendar-check"></i> Confirm Booking
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Summary Panel -->
+    <div>
+      <div class="summary-card">
+        <img src="https://source.unsplash.com/760x320/?luxury-hotel,{{ hotel.city|urlencode }}&sig={{ hotel.id }}bk"
+             class="sc-hotel-img" alt="{{ hotel.name }}"
+             onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=760&q=80'" />
+        <div class="sc-header">
+          <div class="sc-hotel-name">{{ hotel.name }}</div>
+          <div class="sc-hotel-loc"><i class="fas fa-map-marker-alt"></i> {{ hotel.location }}</div>
+        </div>
+        <div class="sc-body">
+          <div class="sc-row">
+            <span class="sc-label">Room Type</span>
+            <span class="sc-value" id="sumRoomType">{{ selected_room.type }}</span>
+          </div>
+          <div class="sc-row">
+            <span class="sc-label">Check-in</span>
+            <span class="sc-value" id="sumCheckIn">—</span>
+          </div>
+          <div class="sc-row">
+            <span class="sc-label">Check-out</span>
+            <span class="sc-value" id="sumCheckOut">—</span>
+          </div>
+          <div class="sc-row">
+            <span class="sc-label">Nights</span>
+            <span class="sc-value" id="sumNights">—</span>
+          </div>
+          <div class="sc-row">
+            <span class="sc-label">Price/Night</span>
+            <span class="sc-value" id="sumPPN">₹{{ selected_room.price|floatformat:"0" }}</span>
+          </div>
+          <div class="sc-row" style="margin-top:0.5rem;">
+            <span class="sc-total">Total (incl. taxes)</span>
+            <span class="sc-total-price" id="sumTotal">—</span>
+          </div>
+          <div style="margin-top:1rem;font-size:0.75rem;color:var(--text-light);text-align:center;">
+            <i class="fas fa-lock"></i> Secured by 256-bit SSL encryption
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let currentPrice = {{ selected_room.price }};
+
+  function selectRoom(type, price, el) {
+    document.querySelectorAll('.room-tab').forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+    currentPrice = price;
+    document.getElementById('finalPrice').value = price;
+    document.getElementById('finalRoomType').value = type;
+    document.getElementById('sumRoomType').textContent = type;
+    document.getElementById('sumPPN').textContent = '₹' + price.toLocaleString('en-IN');
+    calcSummary();
+  }
+
+  function calcSummary() {
+    const ci = document.querySelector('[name="check_in"]').value;
+    const co = document.querySelector('[name="check_out"]').value;
+    if (!ci || !co) return;
+    const nights = Math.round((new Date(co) - new Date(ci)) / 86400000);
+    if (nights <= 0) return;
+    const sub = currentPrice * nights;
+    const tax = Math.round(sub * 0.12);
+    document.getElementById('sumCheckIn').textContent = new Date(ci).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+    document.getElementById('sumCheckOut').textContent = new Date(co).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'});
+    document.getElementById('sumNights').textContent = nights + ' night' + (nights > 1 ? 's' : '');
+    document.getElementById('sumTotal').textContent = '₹' + (sub + tax).toLocaleString('en-IN');
+  }
+
+  document.querySelector('[name="check_in"]').addEventListener('change', calcSummary);
+  document.querySelector('[name="check_out"]').addEventListener('change', calcSummary);
+
+  const today = new Date().toISOString().split('T')[0];
+  document.querySelector('[name="check_in"]').min = today;
+  document.querySelector('[name="check_out"]').min = today;
+</script>
+{% endblock %}

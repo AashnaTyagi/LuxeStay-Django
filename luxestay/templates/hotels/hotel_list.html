@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% block title %}Browse Hotels — LuxeStay{% endblock %}
+
+{% block extra_head %}
+<style>
+  .page-hero {
+    background: linear-gradient(135deg, var(--charcoal) 0%, var(--charcoal-light) 100%);
+    padding: 4rem 0 3rem; text-align: center; position: relative; overflow: hidden;
+  }
+  .page-hero::before { content: ''; position: absolute; inset: 0; background: url('https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1600&q=80') center/cover; opacity: 0.12; }
+  .page-hero > * { position: relative; z-index: 1; }
+  .page-hero h1 { font-family: var(--font-display); font-size: 3rem; color: white; margin-bottom: 0.5rem; }
+  .page-hero p { color: rgba(255,255,255,0.65); }
+  .hotels-layout { display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; padding-top: 2.5rem; }
+  .filter-sidebar { position: sticky; top: 90px; height: calc(100vh - 110px); overflow-y: auto; padding-right: 0.5rem; }
+  .filter-sidebar::-webkit-scrollbar { width: 4px; }
+  .filter-sidebar::-webkit-scrollbar-thumb { background: var(--border); }
+  .filter-block { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.25rem; }
+  .filter-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-mid); margin-bottom: 1rem; }
+  .filter-option { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; cursor: pointer; }
+  .filter-option input[type="checkbox"], .filter-option input[type="radio"] { accent-color: var(--gold); width: 16px; height: 16px; cursor: pointer; }
+  .filter-option label { font-size: 0.875rem; color: var(--text-mid); cursor: pointer; flex: 1; }
+  .price-range { width: 100%; accent-color: var(--gold); }
+  .price-display { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-mid); margin-top: 0.5rem; }
+  .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+  .results-count { font-size: 0.9rem; color: var(--text-mid); }
+  .results-count strong { color: var(--charcoal); font-size: 1.1rem; }
+  .sort-select { padding: 0.5rem 1rem; border: 1.5px solid var(--border); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.875rem; cursor: pointer; background: white; color: var(--text-dark); outline: none; }
+  .sort-select:focus { border-color: var(--gold); }
+  .hotel-list-card { background: var(--white); border-radius: var(--radius-lg); border: 1px solid var(--border); display: grid; grid-template-columns: 280px 1fr auto; overflow: hidden; transition: var(--transition); margin-bottom: 1.25rem; }
+  .hotel-list-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); border-color: rgba(201,168,76,0.3); }
+  .hlc-img { position: relative; overflow: hidden; min-height: 200px; }
+  .hlc-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+  .hotel-list-card:hover .hlc-img img { transform: scale(1.05); }
+  .hlc-badge { position: absolute; top: 0.75rem; left: 0.75rem; background: var(--charcoal); color: white; padding: 0.2rem 0.6rem; border-radius: 5px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+  .hlc-body { padding: 1.5rem; }
+  .hlc-type { font-size: 0.75rem; color: var(--gold); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .hlc-name { font-size: 1.2rem; font-weight: 700; color: var(--charcoal); margin-bottom: 0.35rem; }
+  .hlc-loc { font-size: 0.85rem; color: var(--text-light); margin-bottom: 0.75rem; }
+  .hlc-loc i { color: var(--gold); margin-right: 0.3rem; }
+  .hlc-amenities { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+  .amenity-tag { display: inline-flex; align-items: center; gap: 0.3rem; background: var(--cream); border: 1px solid var(--border); padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; color: var(--text-mid); }
+  .amenity-tag i { color: var(--gold); font-size: 0.65rem; }
+  .hlc-price-panel { padding: 1.5rem; border-left: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; min-width: 200px; }
+  .hlc-rating { text-align: right; }
+  .rating-score { font-size: 1.5rem; font-weight: 800; color: var(--charcoal); }
+  .rating-label { font-size: 0.7rem; color: var(--text-light); }
+  .hlc-pricing { text-align: right; }
+  .from-text { font-size: 0.75rem; color: var(--text-light); }
+  .big-price { font-family: var(--font-heading); font-size: 1.75rem; font-weight: 700; color: var(--charcoal); }
+  .big-price sup { font-size: 1rem; vertical-align: top; margin-top: 4px; }
+  .per-night { font-size: 0.75rem; color: var(--text-light); margin-bottom: 1rem; }
+  .empty-state { text-align: center; padding: 4rem 2rem; }
+  .empty-icon { font-size: 3rem; color: var(--gold); margin-bottom: 1rem; }
+  @media (max-width: 1024px) { .hotels-layout { grid-template-columns: 240px 1fr; } }
+  @media (max-width: 768px) { .hotels-layout { grid-template-columns: 1fr; } .filter-sidebar { position: static; height: auto; } .hotel-list-card { grid-template-columns: 1fr; } .hlc-price-panel { border-left: none; border-top: 1px solid var(--border); flex-direction: row; align-items: center; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+  <div class="container">
+    <h1>Find Your Perfect Stay</h1>
+    <p>{{ hotel_count }} properties available across the world's finest destinations</p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="hotels-layout">
+
+    <aside class="filter-sidebar">
+      <form method="get" id="filterForm">
+
+        <div class="filter-block">
+          <div class="filter-title">Search</div>
+          <input type="text" name="q" class="form-input" placeholder="Hotel or city…" value="{{ current_filters.q }}" style="margin-bottom:0.75rem;" />
+          <select name="city" class="form-input">
+            <option value="">All Cities</option>
+            {% for city in all_cities %}
+            <option value="{{ city }}" {% if current_filters.city == city %}selected{% endif %}>{{ city }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="filter-block">
+          <div class="filter-title">Max Price / Night</div>
+          <input type="range" name="max_price" class="price-range" min="1000" max="35000" step="500"
+                 value="{{ current_filters.max_price|default:'35000' }}"
+                 oninput="document.getElementById('priceVal').textContent = '₹' + (+this.value).toLocaleString('en-IN');" />
+          <div class="price-display">
+            <span>₹1,000</span>
+            <span id="priceVal">₹{% if current_filters.max_price %}{{ current_filters.max_price }}{% else %}35,000{% endif %}</span>
+          </div>
+        </div>
+
+        <div class="filter-block">
+          <div class="filter-title">Star Rating</div>
+          <div class="filter-option">
+            <input type="checkbox" name="stars" value="5" id="star5" {% if '5' in current_filters.stars %}checked{% endif %} />
+            <label for="star5">★★★★★ 5 Stars</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" name="stars" value="4" id="star4" {% if '4' in current_filters.stars %}checked{% endif %} />
+            <label for="star4">★★★★☆ 4 Stars</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" name="stars" value="3" id="star3" {% if '3' in current_filters.stars %}checked{% endif %} />
+            <label for="star3">★★★☆☆ 3 Stars</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" name="stars" value="2" id="star2" {% if '2' in current_filters.stars %}checked{% endif %} />
+            <label for="star2">★★☆☆☆ 2 Stars</label>
+          </div>
+        </div>
+
+        <div class="filter-block">
+          <div class="filter-title">Property Type</div>
+          <div class="filter-option">
+            <input type="radio" name="property_type" value="" id="pt_all" {% if not current_filters.property_type %}checked{% endif %} />
+            <label for="pt_all">All Types</label>
+          </div>
+          <div class="filter-option">
+            <input type="radio" name="property_type" value="hotel" id="pt_hotel" {% if current_filters.property_type == 'hotel' %}checked{% endif %} />
+            <label for="pt_hotel">Hotel</label>
+          </div>
+          <div class="filter-option">
+            <input type="radio" name="property_type" value="resort" id="pt_resort" {% if current_filters.property_type == 'resort' %}checked{% endif %} />
+            <label for="pt_resort">Resort</label>
+          </div>
+          <div class="filter-option">
+            <input type="radio" name="property_type" value="villa" id="pt_villa" {% if current_filters.property_type == 'villa' %}checked{% endif %} />
+            <label for="pt_villa">Villa</label>
+          </div>
+          <div class="filter-option">
+            <input type="radio" name="property_type" value="apartment" id="pt_apartment" {% if current_filters.property_type == 'apartment' %}checked{% endif %} />
+            <label for="pt_apartment">Apartment</label>
+          </div>
+          <div class="filter-option">
+            <input type="radio" name="property_type" value="boutique" id="pt_boutique" {% if current_filters.property_type == 'boutique' %}checked{% endif %} />
+            <label for="pt_boutique">Boutique Hotel</label>
+          </div>
+        </div>
+
+        <div class="filter-block">
+          <div class="filter-title">Facilities</div>
+          <div class="filter-option">
+            <input type="checkbox" name="facilities" value="wifi" id="fac_wifi" {% if 'wifi' in current_filters.facilities %}checked{% endif %} />
+            <label for="fac_wifi"><i class="fas fa-wifi" style="color:var(--gold);margin-right:0.4rem;"></i> Free WiFi</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" name="facilities" value="pool" id="fac_pool" {% if 'pool' in current_filters.facilities %}checked{% endif %} />
+            <label for="fac_pool"><i class="fas fa-swimming-pool" style="color:var(--gold);margin-right:0.4rem;"></i> Swimming Pool</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" name="facilities" value="spa" id="fac_spa" {% if 'spa' in current_filters.facilities %}checked{% endif %} />
+            <label for="fac_spa"><i class="fas fa-spa" style="color:var(--gold);margin-right:0.4rem;"></i> Spa &amp; Wellness</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" name="facilities" value="parking" id="fac_park" {% if 'parking' in current_filters.facilities %}checked{% endif %} />
+            <label for="fac_park"><i class="fas fa-parking" style="color:var(--gold);margin-right:0.4rem;"></i> Free Parking</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" name="facilities" value="restaurant" id="fac_rest" {% if 'restaurant' in current_filters.facilities %}checked{% endif %} />
+            <label for="fac_rest"><i class="fas fa-utensils" style="color:var(--gold);margin-right:0.4rem;"></i> Restaurant</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" name="facilities" value="gym" id="fac_gym" {% if 'gym' in current_filters.facilities %}checked{% endif %} />
+            <label for="fac_gym"><i class="fas fa-dumbbell" style="color:var(--gold);margin-right:0.4rem;"></i> Fitness Center</label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-gold btn-full">
+          <i class="fas fa-filter"></i> Apply Filters
+        </button>
+        <a href="{% url 'hotel_list' %}" class="btn btn-outline btn-full" style="margin-top:0.75rem;">
+          <i class="fas fa-times"></i> Clear All
+        </a>
+      </form>
+    </aside>
+
+    <div>
+      <div class="results-header">
+        <div class="results-count">
+          Showing <strong>{{ hotel_count }}</strong> properties
+          {% if current_filters.q %} for "<em>{{ current_filters.q }}</em>"{% endif %}
+        </div>
+        <select class="sort-select" onchange="applySort(this.value)">
+          <option value="featured"   {% if current_filters.sort == 'featured' %}selected{% endif %}>Top Picks</option>
+          <option value="price_low"  {% if current_filters.sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_high" {% if current_filters.sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+          <option value="rating"     {% if current_filters.sort == 'rating' %}selected{% endif %}>Best Rated</option>
+          <option value="reviews"    {% if current_filters.sort == 'reviews' %}selected{% endif %}>Most Reviewed</option>
+        </select>
+      </div>
+
+      {% if hotels %}
+        {% for hotel in hotels %}
+        <div class="hotel-list-card">
+          <div class="hlc-img">
+            <img src="https://source.unsplash.com/560x400/?hotel,{{ hotel.city|urlencode }}&sig={{ hotel.id }}x"
+                 alt="{{ hotel.name }}"
+                 onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=560&q=80'" />
+            <div class="hlc-badge">{{ hotel.property_type|capfirst }}</div>
+          </div>
+          <div class="hlc-body">
+            <div class="hlc-type">
+              {% if hotel.stars == 5 %}★★★★★{% elif hotel.stars == 4 %}★★★★☆{% elif hotel.stars == 3 %}★★★☆☆{% else %}★★☆☆☆{% endif %}
+              {{ hotel.stars }}-Star {{ hotel.property_type|capfirst }}
+            </div>
+            <div class="hlc-name">{{ hotel.name }}</div>
+            <div class="hlc-loc"><i class="fas fa-map-marker-alt"></i>{{ hotel.location }}</div>
+            <div class="stars" style="font-size:0.9rem;">
+              {% if hotel.stars == 5 %}★★★★★{% elif hotel.stars == 4 %}★★★★☆{% elif hotel.stars == 3 %}★★★☆☆{% else %}★★☆☆☆{% endif %}
+              <span style="color:var(--text-light);font-size:0.75rem;margin-left:0.4rem;">{{ hotel.reviews }} reviews</span>
+            </div>
+            <div class="hlc-amenities">
+              {% for fac in hotel.facilities %}
+              <span class="amenity-tag">
+                {% if fac == 'wifi' %}<i class="fas fa-wifi"></i>
+                {% elif fac == 'spa' %}<i class="fas fa-spa"></i>
+                {% elif fac == 'pool' %}<i class="fas fa-swimming-pool"></i>
+                {% elif fac == 'parking' %}<i class="fas fa-parking"></i>
+                {% elif fac == 'restaurant' %}<i class="fas fa-utensils"></i>
+                {% elif fac == 'gym' %}<i class="fas fa-dumbbell"></i>
+                {% else %}<i class="fas fa-check"></i>{% endif %}
+                {{ fac|capfirst }}
+              </span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="hlc-price-panel">
+            <div class="hlc-rating">
+              <div class="rating-score">{{ hotel.rating }}</div>
+              <div class="rating-label">
+                {% if hotel.rating >= 9 %}Exceptional{% elif hotel.rating >= 8 %}Excellent{% elif hotel.rating >= 7 %}Very Good{% else %}Good{% endif %}
+              </div>
+              <div style="font-size:0.72rem;color:var(--text-light);">{{ hotel.reviews }} reviews</div>
+            </div>
+            <div class="hlc-pricing">
+              <div class="from-text">From</div>
+              <div class="big-price"><sup>₹</sup>{{ hotel.price|floatformat:"0" }}</div>
+              <div class="per-night">per night</div>
+              <a href="{% url 'hotel_detail' hotel.id %}" class="btn btn-gold btn-sm">View Deal</a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fas fa-search"></i></div>
+          <h3 style="margin-bottom:0.5rem;">No hotels found</h3>
+          <p style="color:var(--text-mid);margin-bottom:1.5rem;">Try adjusting your filters or searching a different destination.</p>
+          <a href="{% url 'hotel_list' %}" class="btn btn-gold">Clear Filters</a>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function applySort(value) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort', value);
+    window.location.href = url.toString();
+  }
+</script>
+{% endblock %}

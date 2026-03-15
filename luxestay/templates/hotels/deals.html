@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block title %}Deals of the Day — LuxeStay{% endblock %}
+
+{% block extra_head %}
+<style>
+  .deals-hero {
+    background: linear-gradient(135deg, var(--charcoal) 0%, var(--charcoal-light) 100%);
+    padding: 5rem 0 4rem;
+    text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .deals-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url('https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1600&q=80') center/cover;
+    opacity: 0.1;
+  }
+  .deals-hero > * { position: relative; z-index: 1; }
+  .countdown-strip {
+    display: inline-flex; gap: 1.5rem; align-items: center;
+    background: rgba(201,168,76,0.15);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 40px;
+    padding: 0.6rem 2rem;
+    margin-bottom: 1.5rem;
+    color: var(--gold-light);
+    font-size: 0.85rem;
+  }
+  .countdown-unit { text-align: center; }
+  .countdown-num {
+    font-family: var(--font-heading);
+    font-size: 1.5rem; font-weight: 700;
+    color: var(--gold-light);
+    line-height: 1;
+  }
+  .countdown-lbl { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
+  .countdown-sep { font-size: 1.25rem; color: var(--gold); opacity: 0.5; }
+
+  .deals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.75rem;
+  }
+  .deal-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    transition: var(--transition);
+  }
+  .deal-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+  .deal-img { position: relative; height: 220px; overflow: hidden; }
+  .deal-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+  .deal-card:hover .deal-img img { transform: scale(1.07); }
+  .deal-tag {
+    position: absolute; top: 1rem; left: 1rem;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: white; padding: 0.3rem 0.85rem;
+    border-radius: 6px; font-size: 0.75rem; font-weight: 700;
+  }
+  .deal-expires {
+    position: absolute; bottom: 0.75rem; left: 0;
+    background: rgba(0,0,0,0.7);
+    color: white; padding: 0.3rem 0.85rem;
+    font-size: 0.72rem; border-radius: 0 4px 4px 0;
+  }
+  .deal-body { padding: 1.25rem; }
+  .deal-name { font-weight: 700; font-size: 1rem; color: var(--charcoal); margin-bottom: 0.3rem; }
+  .deal-loc { font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.75rem; }
+  .deal-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .deal-price-block {}
+  .original-price { font-size: 0.8rem; color: var(--text-light); text-decoration: line-through; }
+  .deal-price { font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; color: var(--charcoal); }
+  .deal-price sup { font-size: 0.85rem; vertical-align: top; margin-top: 4px; }
+  .savings-badge {
+    background: rgba(46,204,113,0.12);
+    color: #27ae60;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="deals-hero">
+  <div class="container">
+    <div class="section-tag">Limited Time Offers</div>
+    <h1 style="font-family:var(--font-display);font-size:3.5rem;color:white;margin-bottom:0.75rem;">Deals of the Day</h1>
+    <p style="color:rgba(255,255,255,0.65);margin-bottom:2rem;">Hand-picked offers refreshed every 24 hours. Book before they're gone.</p>
+    <div class="countdown-strip">
+      <i class="fas fa-clock"></i>
+      <span>Deals reset in:</span>
+      <div class="countdown-unit"><div class="countdown-num" id="cdHours">00</div><div class="countdown-lbl">hrs</div></div>
+      <span class="countdown-sep">:</span>
+      <div class="countdown-unit"><div class="countdown-num" id="cdMins">00</div><div class="countdown-lbl">min</div></div>
+      <span class="countdown-sep">:</span>
+      <div class="countdown-unit"><div class="countdown-num" id="cdSecs">00</div><div class="countdown-lbl">sec</div></div>
+    </div>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="deals-grid">
+      {% for hotel in deals %}
+      <div class="deal-card">
+        <div class="deal-img">
+          <img src="https://source.unsplash.com/640x440/?luxury-hotel,{{ hotel.city|urlencode }}&sig={{ hotel.id }}deal"
+               alt="{{ hotel.name }}"
+               onerror="this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=640&q=80'" />
+          <div class="deal-tag"><i class="fas fa-bolt"></i> Best Price</div>
+          <div class="deal-expires"><i class="fas fa-clock"></i> Offer expires tonight</div>
+        </div>
+        <div class="deal-body">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.4rem;">
+            <div class="deal-name">{{ hotel.name }}</div>
+            <div class="rating-chip">{{ hotel.rating }}</div>
+          </div>
+          <div class="deal-loc"><i class="fas fa-map-marker-alt" style="color:var(--gold);"></i> {{ hotel.location }}</div>
+          <div class="stars">
+            {% for i in "12345" %}{% if forloop.counter <= hotel.stars %}★{% else %}☆{% endif %}{% endfor %}
+            <span style="color:var(--text-light);font-size:0.75rem;margin-left:0.4rem;">{{ hotel.reviews }} reviews</span>
+          </div>
+          <div class="deal-footer">
+            <div class="deal-price-block">
+              <div class="original-price">₹{% widthratio hotel.price 1 1 %} <span style="text-decoration:none;color:var(--text-light);">→</span></div>
+              <div class="deal-price"><sup>₹</sup>{{ hotel.price|floatformat:"0" }}</div>
+              <div style="font-size:0.72rem;color:var(--text-light);">per night · incl. taxes</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
+              <span class="savings-badge">🎉 Great Deal</span>
+              <a href="{% url 'book_hotel' hotel.id %}" class="btn btn-gold btn-sm">
+                Book Now
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function updateCountdown() {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0);
+    const diff = midnight - now;
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    document.getElementById('cdHours').textContent = String(h).padStart(2, '0');
+    document.getElementById('cdMins').textContent = String(m).padStart(2, '0');
+    document.getElementById('cdSecs').textContent = String(s).padStart(2, '0');
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+</script>
+{% endblock %}
